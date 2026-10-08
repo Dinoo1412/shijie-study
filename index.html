@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="从零开始的 AI Agent 工程师学习工作台：课程、练习、笔记和进度。">
+  <title>拾阶 · AI 工程师学习工作台</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="curriculum.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <a href="#dashboard" class="brand"><span class="brand-mark">拾</span><span>拾阶<small>一步一步，写出自己的答案。</small></span></a>
+    <div class="sidebar-label">MY LEARNING SPACE</div>
+    <nav aria-label="主导航">
+      <a href="#dashboard" data-nav="dashboard"><span>◈</span>学习工作台</a>
+      <a href="#roadmap" data-nav="roadmap"><span>↗</span>成长路线</a>
+      <a href="#lessons" data-nav="lessons"><span>▤</span>每日课程</a>
+      <a href="#projects" data-nav="projects"><span>⌘</span>实战项目</a>
+      <a href="#notes" data-nav="notes"><span>✎</span>我的笔记</a>
+      <a href="#resources" data-nav="resources"><span>↗</span>资料书架</a>
+    </nav>
+    <div class="sidebar-bottom"><div class="tiny">你的下一站</div><strong>AI Agent 工程师</strong><p>Python → 后端 → RAG → Agent</p><a href="#settings" data-nav="settings">⚙ 学习设置与备份</a><span id="save-state" role="status">● 已在本机保存</span></div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar"><div><span class="tiny">LEARNING / </span><span id="page-label">学习工作台</span></div><div class="top-actions"><span id="today-date"></span><button id="focus-open" class="button compact">◷ 专注学习</button></div></header>
+    <main id="main" tabindex="-1"></main>
+    <footer>拾阶 / 从零基础到独立构建 AI 系统 <span>进度与笔记保存在当前浏览器 · 定期导出备份</span></footer>
+  </div>
+  <dialog id="focus-dialog" aria-labelledby="focus-title"><div class="dialog-top"><span class="eyebrow">ONE THING AT A TIME</span><button class="icon-button" id="focus-close" aria-label="关闭专注面板">×</button></div><h2 id="focus-title">给自己一段专注的时间</h2><p id="focus-task"></p><div class="timer" id="timer-display">25:00</div><label class="field">专注时长<select id="focus-duration"><option value="15">15 分钟</option><option value="25" selected>25 分钟</option><option value="45">45 分钟</option></select></label><div class="button-row"><button class="button primary" id="timer-start">开始专注</button><button class="button" id="timer-stop">结束并记录</button></div><p class="muted small">关闭面板后计时仍会继续。达到目标会自动记录学习时间。</p></dialog>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <noscript>请启用浏览器的 JavaScript，才能使用课程、笔记和进度记录。</noscript>
+</body>
+</html>
