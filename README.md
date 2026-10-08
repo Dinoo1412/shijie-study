@@ -4,7 +4,7 @@
 
 ## 在线使用
 
-网站部署后可通过公共 HTTPS 地址访问，电脑与手机浏览器均可使用。
+在线网站：[打开拾阶](https://shijie-study.jean1412.workers.dev)。电脑与手机浏览器均可使用。
 
 1. 点击“继续学习”，阅读课程并完成验收清单。
 2. 在课程中下载练习文件或打开每周任务说明。Python 练习需在自己的开发环境运行。
@@ -24,7 +24,7 @@
 
 使用 Cloudflare Workers 托管公开网站，GitHub 源码仓库保持私有。构建生成的 `dist/` 只包含网页及练习文件，开发文档和私人来源信息不会发布。
 
-在 Cloudflare 的 Workers & Pages 中创建应用并连接私有仓库 `Dinoo1412/shijie-study`：
+当前网站已通过官方 Wrangler 工具发布。更新网站时运行 `npm run deploy`，需要已登录 Cloudflare。当前尚未绑定 Git 自动部署。若需推送后自动发布，可在 Cloudflare 的 Workers & Pages 中连接私有仓库 `Dinoo1412/shijie-study`：
 
 | 设置 | 值 |
 |---|---|
