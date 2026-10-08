@@ -1,0 +1,10 @@
+{
+  "name": "shijie-study",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "node tools/build-site.cjs",
+    "test": "node tests/verify.cjs",
+    "deploy": "npm run build && npx wrangler deploy"
+  }
+}

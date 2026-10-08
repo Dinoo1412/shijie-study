@@ -1,4 +1,4 @@
-/* 课程内容是依据用户分享的零基础路线编写的学习材料，不是招聘承诺。 */
+/* 课程内容是围绕零基础学习路线编写的学习材料，不是招聘承诺。 */
 const RESOURCES = [
   {id:'python',name:'Python 官方中文教程',category:'Python 基础',url:'https://docs.python.org/zh-cn/3/tutorial/',desc:'配合前四周课程，查阅语法、数据结构、异常、模块和类。先做练习，再用文档查漏补缺。'},
   {id:'install',name:'Python 下载与安装',category:'环境搭建',url:'https://www.python.org/downloads/',desc:'从官方渠道获取 Python 3。已有可用的 Python 3 环境时可直接开始练习。'},
