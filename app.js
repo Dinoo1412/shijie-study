@@ -59,7 +59,11 @@ function goLesson(id){selectedLesson=id;state.lastLesson=id;save();if(location.h
 function flushNote(){if(noteTimeout){clearTimeout(noteTimeout);noteTimeout=null;save();}}
 function render(){
   flushNote();const route=location.hash.slice(1).split('?')[0];const page=Object.hasOwn(pageNames,route)?route:'dashboard';
-  $('#page-label').textContent=pageNames[page];document.querySelectorAll('[data-nav]').forEach(a=>a.classList.toggle('active',a.dataset.nav===page));
+  const inAI=['ai','roadmap','lessons','projects','notes','resources'].includes(page);
+  $('#page-label').textContent=(inAI&&page!=='ai'?'AI Agent / '+pageNames[page].replace(/^AI /,''):pageNames[page]);
+  document.querySelectorAll('[data-nav]').forEach(a=>{const current=a.dataset.nav===page;a.classList.toggle('active',current);if(current)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
+  document.querySelectorAll('[data-section]').forEach(section=>section.classList.toggle('section-current',section.dataset.section===(inAI?'ai':page==='cpp-backend'?'cpp':page==='algorithms'?'algorithms':'')));
+  if(page==='algorithms'&&typeof algorithmTab!=='undefined'){const tab=new URLSearchParams(location.hash.split('?')[1]||'').get('tab');if(['collections','train','language','method'].includes(tab))algorithmTab=tab;}
   $('#focus-open').hidden=['algorithms','cpp-backend','dashboard'].includes(page);
   $('#main').innerHTML=({dashboard:()=>typeof learningPortal==='function'?learningPortal():'正在加载学习总览…',ai:dashboard,'cpp-backend':()=>typeof backendPage==='function'?backendPage():'正在加载后端课程…',roadmap:roadmap,lessons:lessons,projects:projects,algorithms:()=>typeof algorithms==='function'?algorithms():'正在加载算法专题…',notes:notes,resources:resources,settings:settings}[page])();
   bindPage(page);
