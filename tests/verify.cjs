@@ -3,6 +3,7 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 const path=require('node:path');
 const {STAGES,WEEKS,LESSONS,RESOURCES,PROJECTS}=require('../curriculum.js');
+const algorithmState=require('../algorithm-state.js');
 assert.equal(WEEKS.length,52);assert.equal(LESSONS.length,364);assert.equal(PROJECTS.length,4);
 assert.equal(LESSONS.filter(l=>l.detailed).length,28);
 for(let i=0;i<364;i++){
@@ -14,7 +15,7 @@ for(let i=0;i<364;i++){
 const app=fs.readFileSync(path.join(__dirname,'../app.js'),'utf8');
 // Exercise the real backup validator without a browser; all invalid inputs must reject.
 const validator=app.slice(app.indexOf('function validateBackup'),app.indexOf('\nfunction save'));
-const context=vm.createContext({LESSONS,PROJECTS,Date,defaultState:()=>({version:1,settings:{},lessons:{},projects:{},logs:[],lastLesson:1,timer:null})});
+const context=vm.createContext({...algorithmState,LESSONS,PROJECTS,Date,defaultState:()=>({version:1,settings:{},lessons:{},projects:{},logs:[],lastLesson:1,timer:null})});
 vm.runInContext(validator,context);
 const valid={version:1,settings:{name:'测试',startDate:'2026-10-08',hours:2,days:6},lessons:{1:{done:true,checks:[0,1,2],note:'<script>不会执行</script>',completedAt:'2026-10-08'}},projects:{1:[0,1]},logs:[{date:'2026-10-08',minutes:25,lesson:1}],lastLesson:1,timer:null};
 assert.equal(context.validateBackup(valid).lessons[1].note,valid.lessons[1].note);
@@ -25,7 +26,7 @@ new vm.Script(app);new vm.Script(fs.readFileSync(path.join(__dirname,'../curricu
 let clock=Date.parse('2026-10-08T02:00:00Z');
 class TestDate extends Date{constructor(...args){super(...(args.length?args:[clock]));}static now(){return clock;}}
 const nodes=new Map();const store=new Map();
-const runtime=vm.createContext({LESSONS,PROJECTS,STAGES,WEEKS,RESOURCES,Date:TestDate,Intl,Number,JSON,Set,Map,document:{querySelector(selector){if(!nodes.has(selector))nodes.set(selector,{textContent:'',value:'25',disabled:false,classList:{add(){},remove(){}}});return nodes.get(selector);}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)},setTimeout:()=>1,clearTimeout(){},setInterval:()=>1,clearInterval(){}});
+const runtime=vm.createContext({...algorithmState,LESSONS,PROJECTS,STAGES,WEEKS,RESOURCES,Date:TestDate,Intl,Number,JSON,Set,Map,document:{querySelector(selector){if(!nodes.has(selector))nodes.set(selector,{textContent:'',value:'25',disabled:false,classList:{add(){},remove(){}}});return nodes.get(selector);}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)},setTimeout:()=>1,clearTimeout(){},setInterval:()=>1,clearInterval(){}});
 vm.runInContext(app.slice(0,app.indexOf("\n$('#today-date')")),runtime);
 vm.runInContext('render = () => {}; state.timer={started:Date.now()-90000,duration:25,lesson:1}; finishTimer(false);',runtime);
 assert.equal(vm.runInContext('state.logs[0].minutes',runtime),1);

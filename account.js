@@ -3,7 +3,7 @@ const GUEST_KEY = 'shijie-study-v1';
 let cloudUser = null, cloudVersion = 0, cloudReady = false, cloudDirty = false, cloudConflict = false, cloudBusy = false, cloudMessage = '正在连接账号…', cloudTimer;
 let guestRecords = null;
 const accountMetaKey = () => KEY + ':sync';
-const hasRecords = data => data && (Object.keys(data.lessons).length || Object.keys(data.projects).length || data.logs.length || data.settings.name !== '学习者');
+const hasRecords = data => data && (Object.keys(data.lessons).length || Object.keys(data.projects).length || data.logs.length || data.settings.name !== '学习者' || Object.keys(data.algorithms?.records || {}).length || data.algorithms?.cppChecks?.length);
 
 function accountStatus(message) {
   cloudMessage = message;

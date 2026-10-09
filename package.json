@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "node tools/build-site.cjs",
-    "test": "node tests/verify.cjs",
+    "test": "node tests/verify.cjs && node tests/algorithms.cjs",
     "deploy": "npm run build && npx wrangler deploy"
   }
 }

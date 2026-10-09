@@ -88,6 +88,13 @@ async function api(request, env) {
     if (input.userId !== user.id) return json({error: '账号已切换，请刷新页面'}, 401);
     if (!Number.isSafeInteger(input.version) || input.version < 0) return json({error: '记录版本无效'}, 400);
     let data; try { data = stateTools.validateBackup(input.data); } catch (e) { return json({error: e.message}, 400); }
+    // Older open tabs do not know this field. Preserve its existing records while
+    // still using the version check below to prevent concurrent overwrites.
+    if (!Object.hasOwn(input.data, 'algorithms') && input.version > 0) {
+      const previous = await env.DB.prepare('SELECT data FROM progress WHERE user_id = ? AND version = ?').bind(user.id, input.version).first();
+      if (!previous) return json({error: '另一台设备更新了记录，请先处理同步冲突'}, 409);
+      data.algorithms = stateTools.validateBackup(JSON.parse(previous.data)).algorithms;
+    }
     // A running timer belongs to its browser, so two devices cannot record it twice.
     data.timer = null;
     const now = Date.now(), serialized = JSON.stringify(data);

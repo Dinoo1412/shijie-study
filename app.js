@@ -3,12 +3,12 @@ let KEY='shijie-study-v1';
 const $=selector=>document.querySelector(selector);
 const escapeHTML=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const localDay=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-const defaultState=()=>({version:1,settings:{name:'学习者',startDate:localDay(),hours:2,days:6},lessons:{},projects:{},logs:[],lastLesson:1,timer:null});
+const defaultState=()=>({version:1,settings:{name:'学习者',startDate:localDay(),hours:2,days:6},lessons:{},projects:{},logs:[],lastLesson:1,timer:null,algorithms:algorithmDefaults()});
 let state=defaultState(),storageOK=true,storageLoadError=false;
 try{const saved=localStorage.getItem(KEY);if(saved)state=validateBackup(JSON.parse(saved));}catch(error){storageOK=false;storageLoadError=true;}
 let selectedLesson=state.lastLesson,lessonStage='all',lessonWeek='all',lessonStatus='all',lessonSearch='',noteSearch='',resourceSearch='';
 let timerInterval,toastTimeout,noteTimeout;
-const pageNames={dashboard:'学习工作台',roadmap:'成长路线',lessons:'每日课程',projects:'实战项目',notes:'我的笔记',resources:'资料书架',settings:'学习设置与备份'};
+const pageNames={dashboard:'学习工作台',roadmap:'成长路线',lessons:'每日课程',projects:'实战项目',algorithms:'算法练习',notes:'我的笔记',resources:'资料书架',settings:'学习设置与备份'};
 function validateBackup(data){
   if(!data||data.version!==1||!data.settings||!data.lessons||!data.projects||!Array.isArray(data.logs))throw Error('不是有效的拾阶备份文件');
   const s=data.settings;
@@ -31,6 +31,7 @@ function validateBackup(data){
   });
   clean.lastLesson=Number.isInteger(data.lastLesson)&&data.lastLesson>=1&&data.lastLesson<=364?data.lastLesson:1;
   if(data.timer&&Number.isFinite(data.timer.started)&&data.timer.started>0&&data.timer.started<=Date.now()+60000&&[15,25,45].includes(data.timer.duration)&&Number.isInteger(data.timer.lesson)&&data.timer.lesson>=1&&data.timer.lesson<=364)clean.timer={started:data.timer.started,duration:data.timer.duration,lesson:data.timer.lesson};
+  clean.algorithms=validateAlgorithms(data.algorithms);
   return clean;
 }
 function save(){
@@ -58,7 +59,8 @@ function flushNote(){if(noteTimeout){clearTimeout(noteTimeout);noteTimeout=null;
 function render(){
   flushNote();const route=location.hash.slice(1).split('?')[0];const page=Object.hasOwn(pageNames,route)?route:'dashboard';
   $('#page-label').textContent=pageNames[page];document.querySelectorAll('[data-nav]').forEach(a=>a.classList.toggle('active',a.dataset.nav===page));
-  $('#main').innerHTML=({dashboard:dashboard,roadmap:roadmap,lessons:lessons,projects:projects,notes:notes,resources:resources,settings:settings}[page])();
+  $('#focus-open').hidden=page==='algorithms';
+  $('#main').innerHTML=({dashboard:dashboard,roadmap:roadmap,lessons:lessons,projects:projects,algorithms:()=>typeof algorithms==='function'?algorithms():'正在加载算法专题…',notes:notes,resources:resources,settings:settings}[page])();
   bindPage(page);
 }
 function dashboard(){
@@ -109,6 +111,7 @@ function settings(){
 function keepInputSearch(selector,setter){$(selector)?.addEventListener('input',e=>{const value=e.target.value,position=e.target.selectionStart;setter(value);render();const input=$(selector);input.focus();if(position!==null)input.setSelectionRange(position,position);});}
 function bindPage(page){
   if(typeof bindAccount==='function')bindAccount();
+  if(page==='algorithms'&&typeof bindAlgorithms==='function')bindAlgorithms();
   document.querySelectorAll('[data-lesson]').forEach(b=>b.addEventListener('click',()=>{if(page==='lessons'&&!filteredLessons().some(l=>l.id===Number(b.dataset.lesson))){lessonStage='all';lessonWeek='all';lessonStatus='all';lessonSearch='';}goLesson(Number(b.dataset.lesson));}));
   document.querySelectorAll('[data-stage]').forEach(b=>b.addEventListener('click',()=>{lessonStage=b.dataset.stage;lessonWeek='all';lessonStatus='all';lessonSearch='';goLesson(stageLessons(Number(lessonStage)).find(l=>!isDone(l.id))?.id||stageLessons(Number(lessonStage))[0].id);}));
   if(page==='lessons'){
@@ -138,7 +141,7 @@ function exportBackup(){flushNote();download('拾阶完整备份-'+localDay()+'.
 async function importBackup(event){
   const file=event.target.files[0];if(!file)return;
   try{if(file.size>10*1024*1024)throw Error('备份不能超过 10 MB');const imported=validateBackup(JSON.parse(await file.text()));
-    if(!confirm(`备份中有 ${Object.values(imported.lessons).filter(l=>l.done).length} 课完成、${Object.values(imported.lessons).filter(l=>l.note).length} 篇笔记。导入会替换当前记录，建议先导出当前备份。确认导入？`))return;
+    if(!confirm(`备份中有 ${Object.values(imported.lessons).filter(l=>l.done).length} 课完成、${Object.values(imported.lessons).filter(l=>l.note).length} 篇课程笔记、${Object.keys(imported.algorithms.records).length} 条刷题记录。导入会替换当前全部记录（包括算法专题），建议先导出当前备份。确认导入？`))return;
     // 先把有效数据持久化成功，再替换内存，避免失败时丢失当前记录。
     const serialized=JSON.stringify(imported);localStorage.setItem(KEY,serialized);clearTimeout(noteTimeout);noteTimeout=null;state=imported;selectedLesson=state.lastLesson;storageOK=true;storageLoadError=false;syncTimer();save();render();toast('备份已恢复。');
   }catch(error){$('#import-result').textContent='导入失败：'+error.message;}finally{if($('#import-file'))$('#import-file').value='';}

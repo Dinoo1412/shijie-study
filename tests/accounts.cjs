@@ -19,6 +19,14 @@ async function call(path,who,method='GET',data,origin=base){const response=await
  const race=await Promise.all([call('/api/progress','a','PUT',{...write,version:1}),call('/api/progress','a','PUT',{...write,version:1})]);
  assert.deepEqual(race.map(x=>x.status).sort(),[200,409]);
  assert.equal((await call('/api/progress','a')).data.version,2);
+ const withAlgorithm=structuredClone(valid);
+ withAlgorithm.algorithms={language:'cpp',cppChecks:[0],records:{'cpp:2235':{status:'ac',note:'算法云端笔记',reviews:1,lastPracticed:'2026-10-09',nextReview:'2026-10-12'}}};
+ assert.equal((await call('/api/progress','a','PUT',{...write,version:2,data:withAlgorithm})).status,200);
+ assert.deepEqual((await call('/api/progress','a')).data.data.algorithms,withAlgorithm.algorithms);
+ // Simulate a stale app tab writing the old schema after reading the latest version.
+ assert.equal((await call('/api/progress','a','PUT',{...write,version:3})).status,200);
+ assert.deepEqual((await call('/api/progress','a')).data.data.algorithms,withAlgorithm.algorithms);
+ assert.equal((await call('/api/progress','b')).data.data,null);
  assert.equal((await call('/api/logout','a','POST',{})).status,200);
  assert.equal((await call('/api/progress','a')).status,401);
  assert.equal((await call('/api/me','b')).data.user.id,'github:test-b');
