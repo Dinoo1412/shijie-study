@@ -2,6 +2,9 @@ name = "shijie-study"
 main = "server/worker.js"
 compatibility_date = "2026-10-08"
 
+[vars]
+GITHUB_CLIENT_ID = "Ov23lifOuQWsPzbSrdh2"
+
 [assets]
 directory = "./dist"
 binding = "ASSETS"
