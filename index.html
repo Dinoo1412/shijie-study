@@ -23,9 +23,9 @@
     <nav aria-label="主导航">
       <a href="#dashboard" data-nav="dashboard" class="nav-home"><span>◈</span>学习总览</a>
       <section class="nav-section" data-section="ai" aria-label="AI Agent 学习导航">
-        <button class="nav-category nav-toggle" data-toggle="ai" aria-expanded="true" aria-controls="nav-ai">01 / AI Agent <span>⌄</span></button>
-        <a href="#ai" data-nav="ai" class="nav-entry"><span>↗</span>AI Agent<span class="nav-entry-caption">工作台</span></a>
+        <button class="nav-toggle nav-group-button" data-toggle="ai" aria-expanded="true" aria-controls="nav-ai"><span class="nav-group-icon">↗</span><strong>AI Agent</strong><span class="nav-chevron">⌄</span></button>
         <div class="nav-children" id="nav-ai">
+          <a href="#ai" data-nav="ai">学习工作台</a>
           <a href="#roadmap" data-nav="roadmap">成长路线</a>
           <a href="#lessons" data-nav="lessons">每日课程</a>
           <a href="#projects" data-nav="projects">实战项目</a>
@@ -34,9 +34,9 @@
         </div>
       </section>
       <section class="nav-section" data-section="cpp" aria-label="C++ 后端学习导航">
-        <button class="nav-category nav-toggle" data-toggle="cpp" aria-expanded="true" aria-controls="nav-cpp">02 / C++ 后端 <span>⌄</span></button>
-        <a href="#cpp-backend" data-nav="cpp-backend" class="nav-entry"><span>⌘</span>C++ 后端<span class="nav-entry-caption">工作台</span></a>
+        <button class="nav-toggle nav-group-button" data-toggle="cpp" aria-expanded="true" aria-controls="nav-cpp"><span class="nav-group-icon">⌘</span><strong>C++ 后端</strong><span class="nav-chevron">⌄</span></button>
         <div class="nav-children" id="nav-cpp">
+          <a href="#cpp-backend" data-nav="cpp-backend">学习工作台</a>
           <a href="#cpp-roadmap" data-nav="cpp-roadmap">学习路线</a>
           <a href="#cpp-lessons" data-nav="cpp-lessons">实践课程</a>
           <a href="#cpp-projects" data-nav="cpp-projects">实战项目</a>
@@ -45,7 +45,6 @@
         </div>
       </section>
       <section class="nav-section" data-section="algorithms" aria-label="算法训练导航">
-        <h2 class="nav-category">03 / 通用能力</h2>
         <a href="#algorithms?tab=collections" data-nav="algorithms" class="nav-entry"><span>⌁</span>算法训练</a>
       </section>
     </nav>
