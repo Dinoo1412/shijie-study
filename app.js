@@ -3,12 +3,12 @@ let KEY='shijie-study-v1';
 const $=selector=>document.querySelector(selector);
 const escapeHTML=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const localDay=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-const defaultState=()=>({version:1,settings:{name:'学习者',startDate:localDay(),hours:2,days:6},lessons:{},projects:{},logs:[],lastLesson:1,timer:null,algorithms:algorithmDefaults()});
+const defaultState=()=>({version:1,settings:{name:'学习者',startDate:localDay(),hours:2,days:6},lessons:{},projects:{},logs:[],lastLesson:1,timer:null,algorithms:algorithmDefaults(),backend:backendDefaults()});
 let state=defaultState(),storageOK=true,storageLoadError=false;
 try{const saved=localStorage.getItem(KEY);if(saved)state=validateBackup(JSON.parse(saved));}catch(error){storageOK=false;storageLoadError=true;}
 let selectedLesson=state.lastLesson,lessonStage='all',lessonWeek='all',lessonStatus='all',lessonSearch='',noteSearch='',resourceSearch='';
 let timerInterval,toastTimeout,noteTimeout;
-const pageNames={dashboard:'学习工作台',roadmap:'成长路线',lessons:'每日课程',projects:'实战项目',algorithms:'算法练习',notes:'我的笔记',resources:'资料书架',settings:'学习设置与备份'};
+const pageNames={dashboard:'学习总览',ai:'AI Agent 工作台','cpp-backend':'C++ 后端',roadmap:'AI 成长路线',lessons:'AI 每日课程',projects:'AI 实战项目',algorithms:'算法练习',notes:'AI 课程笔记',resources:'AI 资料书架',settings:'账号、设置与备份'};
 function validateBackup(data){
   if(!data||data.version!==1||!data.settings||!data.lessons||!data.projects||!Array.isArray(data.logs))throw Error('不是有效的拾阶备份文件');
   const s=data.settings;
@@ -32,6 +32,7 @@ function validateBackup(data){
   clean.lastLesson=Number.isInteger(data.lastLesson)&&data.lastLesson>=1&&data.lastLesson<=364?data.lastLesson:1;
   if(data.timer&&Number.isFinite(data.timer.started)&&data.timer.started>0&&data.timer.started<=Date.now()+60000&&[15,25,45].includes(data.timer.duration)&&Number.isInteger(data.timer.lesson)&&data.timer.lesson>=1&&data.timer.lesson<=364)clean.timer={started:data.timer.started,duration:data.timer.duration,lesson:data.timer.lesson};
   clean.algorithms=validateAlgorithms(data.algorithms);
+  clean.backend=validateBackend(data.backend);
   return clean;
 }
 function save(){
@@ -59,8 +60,8 @@ function flushNote(){if(noteTimeout){clearTimeout(noteTimeout);noteTimeout=null;
 function render(){
   flushNote();const route=location.hash.slice(1).split('?')[0];const page=Object.hasOwn(pageNames,route)?route:'dashboard';
   $('#page-label').textContent=pageNames[page];document.querySelectorAll('[data-nav]').forEach(a=>a.classList.toggle('active',a.dataset.nav===page));
-  $('#focus-open').hidden=page==='algorithms';
-  $('#main').innerHTML=({dashboard:dashboard,roadmap:roadmap,lessons:lessons,projects:projects,algorithms:()=>typeof algorithms==='function'?algorithms():'正在加载算法专题…',notes:notes,resources:resources,settings:settings}[page])();
+  $('#focus-open').hidden=['algorithms','cpp-backend','dashboard'].includes(page);
+  $('#main').innerHTML=({dashboard:()=>typeof learningPortal==='function'?learningPortal():'正在加载学习总览…',ai:dashboard,'cpp-backend':()=>typeof backendPage==='function'?backendPage():'正在加载后端课程…',roadmap:roadmap,lessons:lessons,projects:projects,algorithms:()=>typeof algorithms==='function'?algorithms():'正在加载算法专题…',notes:notes,resources:resources,settings:settings}[page])();
   bindPage(page);
 }
 function dashboard(){
@@ -105,13 +106,14 @@ function resources(){const list=RESOURCES.filter(r=>`${r.name} ${r.category} ${r
 function settings(){
   const s=state.settings,days=Array.from({length:182},(_,i)=>dateShift(localDay(),i-181)),endDate=dateShift(s.startDate,Math.ceil(364/s.days)*7-1);
   return heading('MAKE IT YOUR OWN','按自己的节奏，稳稳向前。','登录后进度跟随账号；未登录时保存在当前浏览器。')+(typeof accountPanel==='function'?accountPanel():'')+`<div class="settings-grid"><section class="panel"><h2>我的学习计划</h2><form id="settings-form"><label class="field">怎么称呼你<input id="setting-name" maxlength="50" value="${escapeHTML(s.name)}" required></label><label class="field">计划开始日期<input type="date" id="setting-start" value="${s.startDate}" required></label><label class="field">每天的投入<select id="setting-hours">${[1,2,3].map(h=>`<option value="${h}" ${s.hours===h?'selected':''}>${h} 小时</option>`).join('')}</select></label><label class="field">每周学习天数<select id="setting-days">${[1,2,3,4,5,6,7].map(d=>`<option value="${d}" ${s.days===d?'selected':''}>${d} 天</option>`).join('')}</select><small>每个学习日安排一课。原路线为全周学习；加入休息日后完成日期会顺延。</small></label><div class="callout" style="margin:20px 0">当前计划每周 ${s.hours*s.days} 小时，完成 364 课约需 ${Math.ceil(364/s.days)} 周。<p>按计划约在 ${endDate} 完成，仅供排期参考。遇到困难时可放慢速度。</p></div><button class="button primary" type="submit">保存学习计划</button></form></section>
-  <div><section class="panel"><h2>备份，让努力留下来</h2><p class="muted small" style="margin:12px 0 20px">完整备份包含课程进度、笔记、项目验收、时间记录和学习设置。导入会先验证，再由你确认替换。</p><div class="button-row"><button class="button primary" id="export-backup">导出完整备份 ↓</button><button class="button" id="import-backup">导入备份 ↑</button></div><input hidden type="file" id="import-file" accept=".json,application/json"><p id="import-result" class="small" style="margin-top:15px" role="status"></p>${storageLoadError?'<p class="small" style="margin-top:12px">原记录未能读取，为避免覆盖已暂停自动保存。可导入有效备份，或先导出原始记录后重新初始化。</p><div class="button-row" style="margin-top:12px"><button class="button" id="export-raw">导出原始记录</button><button class="button" id="recover-storage">重新初始化保存</button></div>':''}<p class="note-help">备份只下载到本机。请定期保存到自己的备份位置。</p></section>
+  <div><section class="panel"><h2>备份，让努力留下来</h2><p class="muted small" style="margin:12px 0 20px">完整备份包含 AI 课程、C++ 后端验收与笔记、算法题目与复盘、时间记录和学习设置。导入会先验证，再由你确认替换。</p><div class="button-row"><button class="button primary" id="export-backup">导出完整备份 ↓</button><button class="button" id="import-backup">导入备份 ↑</button></div><input hidden type="file" id="import-file" accept=".json,application/json"><p id="import-result" class="small" style="margin-top:15px" role="status"></p>${storageLoadError?'<p class="small" style="margin-top:12px">原记录未能读取，为避免覆盖已暂停自动保存。可导入有效备份，或先导出原始记录后重新初始化。</p><div class="button-row" style="margin-top:12px"><button class="button" id="export-raw">导出原始记录</button><button class="button" id="recover-storage">重新初始化保存</button></div>':''}<p class="note-help">备份只下载到本机。请定期保存到自己的备份位置。</p></section>
   <section class="panel"><div class="section-head"><h3>过去半年的足迹</h3><span class="muted small">${activityDays().size} 个学习日</span></div><div class="habit-grid">${days.map(date=>{const minutes=minutesOn(date),active=activityDays().has(date);return `<div class="habit-cell ${minutes>=120?'level3':minutes>=30?'level2':active?'level1':''}" title="${date} · ${minutes.toFixed(0)} 分钟${active?' · 有学习活动':''}" role="img" aria-label="${date}，${minutes.toFixed(0)} 分钟"></div>`;}).join('')}</div><p class="muted small">完成课程或记录学习时间都会留下足迹。时间统计使用北京时间。</p></section><section class="panel"><h3>使用说明</h3><p class="muted small" style="margin-top:10px">打开网站即可学习。GitHub 登录后自动同步；未登录或离线修改保存在浏览器中，请定期备份。Python 练习需在电脑终端运行；页面不会执行任意 Python 代码。</p></section></div></div>`;
 }
 function keepInputSearch(selector,setter){$(selector)?.addEventListener('input',e=>{const value=e.target.value,position=e.target.selectionStart;setter(value);render();const input=$(selector);input.focus();if(position!==null)input.setSelectionRange(position,position);});}
 function bindPage(page){
   if(typeof bindAccount==='function')bindAccount();
   if(page==='algorithms'&&typeof bindAlgorithms==='function')bindAlgorithms();
+  if(page==='cpp-backend'&&typeof bindBackend==='function')bindBackend();
   document.querySelectorAll('[data-lesson]').forEach(b=>b.addEventListener('click',()=>{if(page==='lessons'&&!filteredLessons().some(l=>l.id===Number(b.dataset.lesson))){lessonStage='all';lessonWeek='all';lessonStatus='all';lessonSearch='';}goLesson(Number(b.dataset.lesson));}));
   document.querySelectorAll('[data-stage]').forEach(b=>b.addEventListener('click',()=>{lessonStage=b.dataset.stage;lessonWeek='all';lessonStatus='all';lessonSearch='';goLesson(stageLessons(Number(lessonStage)).find(l=>!isDone(l.id))?.id||stageLessons(Number(lessonStage))[0].id);}));
   if(page==='lessons'){

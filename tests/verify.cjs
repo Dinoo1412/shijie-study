@@ -3,7 +3,7 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 const path=require('node:path');
 const {STAGES,WEEKS,LESSONS,RESOURCES,PROJECTS}=require('../curriculum.js');
-const algorithmState=require('../algorithm-state.js');
+const algorithmState={...require('../algorithm-state.js'),...require('../backend-state.js')};
 assert.equal(WEEKS.length,52);assert.equal(LESSONS.length,364);assert.equal(PROJECTS.length,4);
 assert.equal(LESSONS.filter(l=>l.detailed).length,28);
 for(let i=0;i<364;i++){

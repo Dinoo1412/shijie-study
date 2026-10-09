@@ -1,6 +1,7 @@
 const {LESSONS,PROJECTS}=require('../curriculum.js');
 const {algorithmDefaults,validateAlgorithms}=require('../algorithm-state.js');
-const defaultState=()=>({version:1,settings:{},lessons:{},projects:{},logs:[],lastLesson:1,timer:null,algorithms:algorithmDefaults()});
+const {backendDefaults,validateBackend}=require('../backend-state.js');
+const defaultState=()=>({version:1,settings:{},lessons:{},projects:{},logs:[],lastLesson:1,timer:null,algorithms:algorithmDefaults(),backend:backendDefaults()});
 function validateBackup(data){
   if(!data||data.version!==1||!data.settings||!data.lessons||!data.projects||!Array.isArray(data.logs))throw Error('不是有效的拾阶备份文件');
   const s=data.settings;
@@ -24,6 +25,7 @@ function validateBackup(data){
   clean.lastLesson=Number.isInteger(data.lastLesson)&&data.lastLesson>=1&&data.lastLesson<=364?data.lastLesson:1;
   if(data.timer&&Number.isFinite(data.timer.started)&&data.timer.started>0&&data.timer.started<=Date.now()+60000&&[15,25,45].includes(data.timer.duration)&&Number.isInteger(data.timer.lesson)&&data.timer.lesson>=1&&data.timer.lesson<=364)clean.timer={started:data.timer.started,duration:data.timer.duration,lesson:data.timer.lesson};
   clean.algorithms=validateAlgorithms(data.algorithms);
+  clean.backend=validateBackend(data.backend);
   return clean;
 }
 module.exports={validateBackup};

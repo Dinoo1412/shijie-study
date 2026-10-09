@@ -1,0 +1,22 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const all={...require('../curriculum.js'),...require('../algorithm-data.js'),...require('../algorithm-state.js'),...require('../backend-data.js'),...require('../backend-state.js')};
+assert.equal(all.BACKEND_UNITS.length,16);assert.equal(all.BACKEND_PHASES.length,4);
+for(const u of all.BACKEND_UNITS){assert(u.concept&&u.practice&&u.deliverable&&u.url);assert.equal(u.checks.length,3);}
+const nodes=new Map(),handlers=new Map(),checks=[0,1,2].map(i=>({dataset:{backendCheck:String(i)},checked:true,addEventListener(type,fn){handlers.set('check'+i,fn);}}));
+const context=vm.createContext({...all,Date,Intl,location:{hash:'#cpp-backend'},document:{querySelector(s){if(!nodes.has(s))nodes.set(s,{textContent:'',value:'',classList:{add(){},remove(){}},addEventListener(type,fn){handlers.set(s+':'+type,fn);}});return nodes.get(s);},querySelectorAll(s){return s==='[data-backend-check]'?checks:[];}},localStorage:{getItem:()=>null,setItem(){}},setTimeout:()=>1,clearTimeout(){},setInterval:()=>1,clearInterval(){}});
+vm.runInContext(fs.readFileSync('app.js','utf8').split("\n$('#today-date')")[0],context);
+vm.runInContext('render=()=>{};toast=()=>{};',context);
+vm.runInContext(fs.readFileSync('algorithms.js','utf8'),context);
+vm.runInContext(fs.readFileSync('platform.js','utf8'),context);
+vm.runInContext('bindBackend();',context);
+for(let i=0;i<3;i++)handlers.get('check'+i)();
+assert.equal(vm.runInContext('backendComplete(1)',context),true);
+checks[0].checked=false;handlers.get('check0')();assert.equal(vm.runInContext('backendComplete(1)',context),false);
+vm.runInContext("state.backend.records[1].note='<script>alert(1)</script>';",context);
+assert(vm.runInContext('backendPage()',context).includes('&lt;script&gt;alert(1)&lt;/script&gt;'));
+const home=vm.runInContext('learningPortal()',context);
+for(const text of ['AI Agent 工程师','C++ 后端工程师','算法与代码能力'])assert(home.includes(text));
+assert.equal(vm.runInContext('Object.keys(state.lessons).length',context),0);
+assert.equal(vm.runInContext('Object.keys(state.algorithms.records).length',context),0);
+assert(vm.runInContext('algorithmCollections()',context).includes('字符串'));
+console.log('通过：三路线入口、16 单元内容、后端验收与撤销、笔记转义、三路线进度隔离。');

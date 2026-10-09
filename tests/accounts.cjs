@@ -20,12 +20,16 @@ async function call(path,who,method='GET',data,origin=base){const response=await
  assert.deepEqual(race.map(x=>x.status).sort(),[200,409]);
  assert.equal((await call('/api/progress','a')).data.version,2);
  const withAlgorithm=structuredClone(valid);
- withAlgorithm.algorithms={language:'cpp',cppChecks:[0],records:{'cpp:2235':{status:'ac',note:'算法云端笔记',reviews:1,lastPracticed:'2026-10-09',nextReview:'2026-10-12'}}};
+ withAlgorithm.algorithms={schema:2,customProblems:[],cppChecks:[0],records:{2235:{status:'ac',note:'算法云端笔记',reviews:1,lastPracticed:'2026-10-09',nextReview:'2026-10-12'}}};
+ withAlgorithm.backend={lastUnit:1,records:{1:{note:'后端工程记录',checks:[0,1]}}};
  assert.equal((await call('/api/progress','a','PUT',{...write,version:2,data:withAlgorithm})).status,200);
  assert.deepEqual((await call('/api/progress','a')).data.data.algorithms,withAlgorithm.algorithms);
  // Simulate a stale app tab writing the old schema after reading the latest version.
  assert.equal((await call('/api/progress','a','PUT',{...write,version:3})).status,200);
  assert.deepEqual((await call('/api/progress','a')).data.data.algorithms,withAlgorithm.algorithms);
+ assert.deepEqual((await call('/api/progress','a')).data.data.backend,withAlgorithm.backend);
+ const staleLanguage={...valid,algorithms:{language:'python',cppChecks:[],records:{}}};
+ assert.equal((await call('/api/progress','a','PUT',{...write,version:4,data:staleLanguage})).status,409);
  assert.equal((await call('/api/progress','b')).data.data,null);
  assert.equal((await call('/api/logout','a','POST',{})).status,200);
  assert.equal((await call('/api/progress','a')).status,401);

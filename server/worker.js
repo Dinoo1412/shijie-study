@@ -90,10 +90,13 @@ async function api(request, env) {
     let data; try { data = stateTools.validateBackup(input.data); } catch (e) { return json({error: e.message}, 400); }
     // Older open tabs do not know this field. Preserve its existing records while
     // still using the version check below to prevent concurrent overwrites.
-    if (!Object.hasOwn(input.data, 'algorithms') && input.version > 0) {
+    if ((!Object.hasOwn(input.data, 'algorithms') || !Object.hasOwn(input.data, 'backend') || input.data.algorithms?.schema !== 2) && input.version > 0) {
       const previous = await env.DB.prepare('SELECT data FROM progress WHERE user_id = ? AND version = ?').bind(user.id, input.version).first();
       if (!previous) return json({error: '另一台设备更新了记录，请先处理同步冲突'}, 409);
-      data.algorithms = stateTools.validateBackup(JSON.parse(previous.data)).algorithms;
+      const stored = JSON.parse(previous.data), normalized = stateTools.validateBackup(stored);
+      if (Object.hasOwn(input.data, 'algorithms') && input.data.algorithms.schema !== 2 && stored.algorithms?.schema === 2) return json({error: '算法记录格式已更新，请刷新页面后继续'}, 409);
+      if (!Object.hasOwn(input.data, 'algorithms')) data.algorithms = normalized.algorithms;
+      if (!Object.hasOwn(input.data, 'backend')) data.backend = normalized.backend;
     }
     // A running timer belongs to its browser, so two devices cannot record it twice.
     data.timer = null;

@@ -1,6 +1,20 @@
 'use strict';
 // Curated starting points, not a copy of the complete source problem lists.
 const ALGORITHM_SOURCE='https://leetcode.cn/discuss/post/3141566/ru-he-ke-xue-shua-ti-by-endlesscheng-q3yd/';
+const ALGORITHM_COLLECTIONS=[
+ ['window','滑动窗口与双指针','定长 / 不定长 / 单序列 / 双序列 / 分组循环','0viNMK'],
+ ['binary','二分算法','二分查找 / 二分答案 / 第 K 小','SqopEo'],
+ ['stack','单调栈','基础 / 矩形面积 / 贡献法 / 最小字典序','9oZFK9'],
+ ['grid','网格图','DFS / BFS / 综合应用','YiXPXW'],
+ ['bits','位运算','基础 / 性质 / 拆位 / 试填 / 思维','dHn9Vk'],
+ ['graph','图论算法','拓扑排序 / 最短路 / 最小生成树 / 网络流','01LUak'],
+ ['dp','动态规划','入门 / 背包 / 状态机 / 区间 / 状压 / 数位 / 树形','tXLS3i'],
+ ['structure','常用数据结构','枚举 / 前缀和 / 差分 / 栈 / 队列 / 堆 / 并查集 / 线段树','mOr1u6'],
+ ['math','数学算法','数论 / 组合 / 概率期望 / 博弈 / 计算几何','IYT3ss'],
+ ['greedy','贪心与思维','反悔 / 区间 / 字典序 / 构造 / 思维','g6KTKL'],
+ ['tree','链表、树与回溯','前后指针 / 快慢指针 / DFS / BFS / 直径 / LCA','K0n2gO'],
+ ['string','字符串','KMP / Z 函数 / Manacher / 字符串哈希 / AC 自动机','SJFwQI']
+].map(([id,title,topics,slug])=>({id,title,topics,url:'https://leetcode.cn/circle/discuss/'+slug+'/'}));
 const ALGORITHM_STAGES=[
   {id:0,title:'编程入门',skill:'语法 → 数组 → 字符串',goal:'先能读懂函数签名，用循环、条件和容器独立写出小程序。',gate:'能解释参数和返回值，处理空数组、重复值与边界下标。',url:'https://leetcode.cn/studyplan/primers-list/',lessons:[2,4,5,8,11,12]},
   {id:1,title:'滑动窗口',skill:'定长窗口 → 不定长窗口',goal:'用窗口维护一段连续区间，理解什么时候加入右端、移出左端。',gate:'能说明窗口的不变量，并解释为何两个指针合计只走 O(n) 次。',url:'https://leetcode.cn/circle/discuss/0viNMK/',lessons:[5,8,10,11]},
@@ -71,4 +85,4 @@ const CPP_MODULES=[
   {id:6,title:'指针、递归与回溯',topics:'nullptr、TreeNode*、递归终止；路径 push_back / pop_back。',exercise:'先练 104，再练 78；画出递归栈，并解释 path 被修改后为何历史答案不应跟着变化。',code:'void dfs(int i, const vector<int>& nums, vector<int>& path,\n         vector<vector<int>>& answer) {\n    if (i == int(nums.size())) {\n        answer.push_back(path); // 保存路径的副本\n        return;\n    }\n    dfs(i + 1, nums, path, answer);\n    path.push_back(nums[i]);\n    dfs(i + 1, nums, path, answer);\n    path.pop_back();\n}',pitfall:'每次选择都要撤销；访问指针成员前判空。深递归可能需要改成显式栈。'},
   {id:7,title:'二维容器与动态规划',topics:'vector<vector<int>>、初始化、边界；状态与遍历顺序。',exercise:'练 62、198；先解释 DP 状态，再写递推，最后对照 Python 版观察类型和初始化差异。',code:'vector<vector<int>> dp(rows, vector<int>(cols, 0));\nfor (int r = 0; r < rows; ++r) {\n    for (int c = 0; c < cols; ++c) {\n        // 按题目的状态定义填写转移与边界\n    }\n}',pitfall:'C++ 局部基础类型变量未初始化时不能直接读取；二维下标别混用行和列。'}
 ];
-if(typeof module!=='undefined')module.exports={ALGORITHM_SOURCE,ALGORITHM_STAGES,ALGORITHM_PROBLEMS,CPP_MODULES};
+if(typeof module!=='undefined')module.exports={ALGORITHM_SOURCE,ALGORITHM_STAGES,ALGORITHM_PROBLEMS,ALGORITHM_COLLECTIONS,CPP_MODULES};

@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
-const curriculum=require('../curriculum.js'),catalog=require('../algorithm-data.js'),schema=require('../algorithm-state.js');
+const curriculum=require('../curriculum.js'),catalog=require('../algorithm-data.js'),schema={...require('../algorithm-state.js'),...require('../backend-state.js')};
 const {validateBackup}=require('../server/state.cjs');
 const old={version:1,settings:{name:'旧用户',startDate:'2026-10-09',hours:2,days:6},lessons:{1:{done:true,checks:[0,1,2],note:'原笔记',completedAt:'2026-10-09'}},projects:{1:[0]},logs:[{date:'2026-10-09',minutes:25,lesson:1}],lastLesson:1,timer:null};
 const restored=validateBackup(old);
@@ -8,10 +8,22 @@ assert.deepEqual(restored.lessons,old.lessons);assert.deepEqual(restored.logs,ol
 assert.equal(catalog.ALGORITHM_PROBLEMS.length,48);assert.equal(new Set(catalog.ALGORITHM_PROBLEMS.map(p=>p.id)).size,48);
 for(const stage of catalog.ALGORITHM_STAGES)assert.equal(catalog.ALGORITHM_PROBLEMS.filter(p=>p.stage===stage.id).length,6);
 const record={status:'ac',note:'<img src=x onerror=alert(1)>',reviews:0,lastPracticed:'2026-10-09',nextReview:'2026-10-10'};
-restored.algorithms.records['python:2235']=record;
-restored.algorithms.records['cpp:2235']={...record,status:'attempted',note:'C++ 独立笔记',nextReview:null};
+const legacy={language:'cpp',cppChecks:[0,1],records:{'python:2235':record,'cpp:2235':{...record,status:'attempted',note:'C++ 原笔记',nextReview:null}}};
+restored.algorithms=schema.validateAlgorithms(legacy);
+assert.equal(Object.keys(restored.algorithms.records).length,1);
+assert.equal(restored.algorithms.records[2235].status,'ac');
+assert(restored.algorithms.records[2235].note.includes('C++ 原笔记'));
+assert.equal(restored.algorithms.schema,2);
+assert.equal(schema.validateAlgorithms({language:'python',records:{'python:2235':{...record,note:'a'.repeat(20000)},'cpp:2235':{...record,note:'b'.repeat(20000)}},cppChecks:[]}).records[2235].note.length>40000,true);
+assert.equal(catalog.ALGORITHM_COLLECTIONS.length,12);
+assert.equal(new Set(catalog.ALGORITHM_COLLECTIONS.map(c=>c.url)).size,12);
+restored.algorithms.customProblems.push({id:99999,title:'自选题',url:'https://leetcode.cn/problems/custom-test/',collection:'string'});
+restored.algorithms.records[99999]={...record,note:'自选题复盘'};
+restored.backend={lastUnit:2,records:{2:{note:'后端学习笔记',checks:[0,1]}}};
 assert.deepEqual(validateBackup(JSON.parse(JSON.stringify(restored))).algorithms,restored.algorithms);
-for(const change of [s=>s.language='js',s=>s.cppChecks=[99],s=>s.records['python:999999']=record,s=>s.records['python:2235'].nextReview='2026-02-30',s=>s.records['python:2235'].note='x'.repeat(20001),s=>s.records['python:2235'].reviews=-1,s=>s.records['python:2235'].lastPracticed=null]){const copy=structuredClone(restored.algorithms);change(copy);assert.throws(()=>schema.validateAlgorithms(copy));}
+for(const change of [s=>s.schema=99,s=>s.cppChecks=[99],s=>s.records['999999']=record,s=>s.records[2235].nextReview='2026-02-30',s=>s.records[2235].note='x'.repeat(50001),s=>s.records[2235].reviews=-1,s=>s.records[2235].lastPracticed=null,s=>s.customProblems[0].url='javascript:alert(1)']){const copy=structuredClone(restored.algorithms);change(copy);assert.throws(()=>schema.validateAlgorithms(copy));}
+assert.deepEqual(validateBackup(restored).backend,restored.backend);
+assert.throws(()=>schema.validateBackend({lastUnit:1,records:{1:{note:'x',checks:[9]}}}));
 const handlers=new Map(),nodes=new Map();
 const context=vm.createContext({...curriculum,...catalog,...schema,Date,Intl,URL,location:{hash:'#dashboard'},window:{},document:{activeElement:null,querySelector(s){if(!nodes.has(s))nodes.set(s,{textContent:'',value:'25',dataset:{},disabled:false,classList:{add(){},remove(){},toggle(){}},addEventListener(type,fn){handlers.set(s+':'+type,fn);}});return nodes.get(s);},querySelectorAll(){return [];}},localStorage:{getItem:()=>null,setItem(){}},setTimeout:()=>1,clearTimeout(){},setInterval:()=>1,clearInterval(){}});
 vm.runInContext(fs.readFileSync('app.js','utf8').split("\n$('#today-date')")[0],context);
@@ -23,9 +35,10 @@ assert.equal(vm.runInContext("algorithmRecord(2235).status",context),'ac');
 handlers.get('#algorithm-revisit:click')();
 assert.equal(vm.runInContext("algorithmRecord(2235).reviews",context),1);
 assert.equal(vm.runInContext("algorithmRecord(2235).nextReview===dateShift(localDay(),3)",context),true);
-assert.equal(vm.runInContext("algorithmRecord(2235,'cpp').note",context),'C++ 独立笔记');
+assert.equal(vm.runInContext('algorithmAllProblems().length',context),49);
+assert.equal(vm.runInContext("algorithmRecord(2235).note.includes('C++ 原笔记')",context),true);
 const html=vm.runInContext('algorithmDetail(ALGORITHM_PROBLEMS[0])',context);
 assert(html.includes('&lt;img src=x onerror=alert(1)&gt;'));assert(!html.includes('<img src=x'));
 assert.deepEqual(JSON.parse(vm.runInContext('JSON.stringify(state.lessons)',context)),old.lessons);
 assert.deepEqual(JSON.parse(vm.runInContext('JSON.stringify(state.logs)',context)),old.logs);
-console.log('通过：旧备份兼容、主线记录保留、48 题阶段结构、双语言独立进度、算法备份往返、非法记录拒绝、独立复做排期、复盘 HTML 转义。');
+console.log('通过：旧备份与分语言记录合并、原课程保留、完整 12 类目录、自选题记录、后端进度往返、非法链接与数据拒绝、复习排期、复盘 HTML 转义。');

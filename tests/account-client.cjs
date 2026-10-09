@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const curriculum=require('../curriculum.js');
-Object.assign(curriculum,require('../algorithm-state.js'));
+Object.assign(curriculum,require('../algorithm-state.js'),require('../backend-state.js'));
 const app=fs.readFileSync('app.js','utf8').split("\n$('#today-date')")[0];
 const account=fs.readFileSync('account.js','utf8').replace(/accountInit\(\);\s*$/,'');
 const guest={version:1,settings:{name:'访客',startDate:'2026-10-09',hours:2,days:6},lessons:{1:{done:true,checks:[0,1,2],note:'旧笔记',completedAt:'2026-10-09'}},projects:{},logs:[],lastLesson:1,timer:null};
