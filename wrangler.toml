@@ -1,5 +1,14 @@
 name = "shijie-study"
+main = "server/worker.js"
 compatibility_date = "2026-10-08"
 
 [assets]
 directory = "./dist"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "shijie-study-users"
+database_id = "5477bab6-c4fa-43ce-bcff-64e0b1b5d33c"
+migrations_dir = "migrations"

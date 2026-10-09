@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="styles.css">
   <script defer src="curriculum.js"></script>
   <script defer src="app.js"></script>
+  <script defer src="account.js"></script>
 </head>
 <body>
   <aside class="sidebar">
@@ -26,7 +27,7 @@
   <div class="workspace">
     <header class="topbar"><div><span class="tiny">LEARNING / </span><span id="page-label">学习工作台</span></div><div class="top-actions"><span id="today-date"></span><button id="focus-open" class="button compact">◷ 专注学习</button></div></header>
     <main id="main" tabindex="-1"></main>
-    <footer>拾阶 / 从零基础到独立构建 AI 系统 <span>进度与笔记保存在当前浏览器 · 定期导出备份</span></footer>
+    <footer>拾阶 / 从零基础到独立构建 AI 系统 <span>登录后跨设备同步 · 定期导出备份</span></footer>
   </div>
   <dialog id="focus-dialog" aria-labelledby="focus-title"><div class="dialog-top"><span class="eyebrow">ONE THING AT A TIME</span><button class="icon-button" id="focus-close" aria-label="关闭专注面板">×</button></div><h2 id="focus-title">给自己一段专注的时间</h2><p id="focus-task"></p><div class="timer" id="timer-display">25:00</div><label class="field">专注时长<select id="focus-duration"><option value="15">15 分钟</option><option value="25" selected>25 分钟</option><option value="45">45 分钟</option></select></label><div class="button-row"><button class="button primary" id="timer-start">开始专注</button><button class="button" id="timer-stop">结束并记录</button></div><p class="muted small">关闭面板后计时仍会继续。达到目标会自动记录学习时间。</p></dialog>
   <div id="toast" role="status" aria-live="polite"></div>
