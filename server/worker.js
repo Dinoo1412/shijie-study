@@ -47,6 +47,7 @@ async function api(request, env) {
     ]);
     const challenge = btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.digest('SHA-256', encoder.encode(verifier))))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     const target = new URL('https://github.com/login/oauth/authorize');
+    if(url.searchParams.get('switch')==='1')target.searchParams.set('prompt','select_account');
     for (const [k, v] of Object.entries({client_id: env.GITHUB_CLIENT_ID, redirect_uri: url.origin + '/api/auth/callback', state, code_challenge: challenge, code_challenge_method: 'S256'})) target.searchParams.set(k, v);
     // No repository or email scopes: only GitHub's public identity is required.
     return redirect(target.href, [setCookie(OAUTH, state, 600)]);

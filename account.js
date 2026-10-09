@@ -62,7 +62,21 @@ async function cloudPull() {
 function accountPanel() {
   if (!cloudReady) return '<section class="panel account-panel"><h2>账号与云同步</h2><p id="account-status" role="status">' + escapeHTML(cloudMessage) + '</p><button class="button" id="account-retry">重新连接</button></section>';
   if (!cloudUser) return '<section class="panel account-panel"><h2>让学习记录跟随你</h2><p class="muted small">通过 GitHub 登录，在不同浏览器和设备使用同一份进度、笔记和设置。登录只读取你的 GitHub 身份，不申请仓库权限。未登录时使用浏览器记录。</p><p id="account-status" role="status">' + escapeHTML(cloudMessage) + '</p><a class="button primary" id="github-login" href="/api/auth/github">使用 GitHub 登录 ↗</a></section>';
-  return `<section class="panel account-panel"><div class="section-head"><h2>${escapeHTML(cloudUser.name)} 的学习账号</h2><button class="button compact" id="account-logout">退出登录</button></div><p id="account-status" role="status">${escapeHTML(cloudMessage)}</p><p class="muted small">修改自动上传，其他设备约 15 秒获取更新。请确认显示“已同步到云端”后再切换设备。专注计时仅在启动它的浏览器运行。</p><div class="button-row"><button class="button" id="account-sync">立即同步</button></div>${cloudConflict ? '<div class="callout"><strong>两台设备都修改了记录</strong><p>不会自动覆盖。先导出本机备份，再选择要继续使用的记录。</p><div class="button-row"><button class="button" id="account-use-cloud">使用最新云端记录</button><button class="button" id="account-use-local">用本机记录替换云端</button></div></div>' : ''}${hasRecords(guestRecords) ? '<div class="callout"><strong>发现这个浏览器的旧学习记录</strong><p>旧记录仍保留在访客空间。迁移会用旧记录替换当前账号记录，请先备份。</p><div class="button-row"><button class="button" id="account-export-guest">备份旧记录</button><button class="button" id="account-migrate">迁移旧记录到此账号</button></div></div>' : ''}</section>`;
+  return `<section class="panel account-panel"><div class="section-head"><h2>${escapeHTML(cloudUser.name)} 的学习账号</h2><button class="button compact" id="account-logout">退出登录</button></div><p id="account-status" role="status">${escapeHTML(cloudMessage)}</p><p class="muted small">修改自动上传，其他设备约 15 秒获取更新。请确认显示“已同步到云端”后再切换设备。专注计时仅在启动它的浏览器运行。</p><p class="muted small">切换账号会先保存当前记录、退出拾阶，再前往 GitHub 选择账号。每个账号的学习记录独立；取消登录后回到访客模式。</p><div class="button-row"><button class="button" id="account-sync">立即同步</button><button class="button" id="account-switch">切换账号</button></div>${cloudConflict ? '<div class="callout"><strong>两台设备都修改了记录</strong><p>不会自动覆盖。先导出本机备份，再选择要继续使用的记录。</p><div class="button-row"><button class="button" id="account-use-cloud">使用最新云端记录</button><button class="button" id="account-use-local">用本机记录替换云端</button></div></div>' : ''}${hasRecords(guestRecords) ? '<div class="callout"><strong>发现这个浏览器的旧学习记录</strong><p>旧记录仍保留在访客空间。迁移会用旧记录替换当前账号记录，请先备份。</p><div class="button-row"><button class="button" id="account-export-guest">备份旧记录</button><button class="button" id="account-migrate">迁移旧记录到此账号</button></div></div>' : ''}</section>`;
+}
+async function accountEndSession(switchAccount=false) {
+  flushNote();
+  if (cloudConflict || cloudBusy) {toast('请先完成同步并处理冲突后再切换或退出。');return false;}
+  if (cloudDirty && !await cloudPush()) {toast('还有未同步记录，请先完成同步或导出备份。');return false;}
+  cloudBusy=true;
+  try {
+    await cloudApi('logout', {method:'POST',body:'{}'});
+    clearTimeout(cloudTimer);cloudUser=null;KEY=GUEST_KEY;cloudDirty=false;cloudConflict=false;storageLoadError=false;
+    state=guestRecords||defaultState();selectedLesson=state.lastLesson;render();syncTimer();accountStatus('已退出，当前使用访客记录');
+    if(switchAccount)location.href='/api/auth/github?switch=1';
+    return true;
+  } catch {toast('退出失败，请重试。');return false;}
+  finally {cloudBusy=false;}
 }
 function bindAccount() {
   $('#account-retry')?.addEventListener('click', accountInit);
@@ -82,12 +96,8 @@ function bindAccount() {
     if (!confirm('确认用本机记录替换最新云端记录？其他设备的更新可能被覆盖，请先备份。')) return;
     try { const result = await cloudApi('progress?account=' + encodeURIComponent(cloudUser.id)); cloudVersion = result.version; cloudConflict = false; cloudDirty = true; cloudMeta(); await cloudPush(); render(); } catch { toast('连接失败，本机记录保持不变。'); }
   });
-  $('#account-logout')?.addEventListener('click', async () => {
-    flushNote();
-    if (cloudConflict || cloudBusy) return toast('请先完成同步并处理冲突后再退出。');
-    if (cloudDirty && !await cloudPush()) return toast('还有未同步记录，请先完成同步或导出备份。');
-    try { await cloudApi('logout', {method: 'POST', body: '{}'}); clearTimeout(cloudTimer); cloudUser = null; KEY = GUEST_KEY; cloudDirty = false; cloudConflict = false; storageLoadError = false; state = guestRecords || defaultState(); selectedLesson = state.lastLesson; render(); syncTimer(); accountStatus('已退出，当前使用访客记录'); } catch { toast('退出失败，请重试。'); }
-  });
+  $('#account-logout')?.addEventListener('click',()=>accountEndSession());
+  $('#account-switch')?.addEventListener('click',()=>accountEndSession(true));
 }
 async function accountInit() {
   if (cloudUser) return;
