@@ -14,6 +14,10 @@
   <script defer src="app.js"></script>
   <script defer src="algorithms.js"></script>
   <script defer src="platform.js"></script>
+  <script defer src="vendor/marked.umd.js"></script>
+  <script defer src="vendor/purify.min.js"></script>
+  <script defer src="material-data.js"></script>
+  <script defer src="materials.js"></script>
   <script defer src="account.js"></script>
 </head>
 <body>
@@ -48,7 +52,7 @@
         <a href="#algorithms?tab=collections" data-nav="algorithms" class="nav-entry"><span>⌁</span>算法训练</a>
       </section>
     </nav>
-    <div class="sidebar-bottom"><a href="#settings" data-nav="settings">⚙ 账号与备份</a><span id="save-state" role="status">● 已在本机保存</span></div>
+    <div class="sidebar-bottom"><a href="#materials" data-nav="materials">▤ 学习资源中心</a><a href="#obsidian" data-nav="obsidian">✎ Obsidian 笔记库</a><a href="#settings" data-nav="settings">⚙ 账号与备份</a><span id="save-state" role="status">● 已在本机保存</span></div>
   </aside>
   <div class="workspace">
     <header class="topbar"><div><span class="tiny">LEARNING / </span><span id="page-label">学习工作台</span></div><div class="top-actions"><span id="today-date"></span><button id="focus-open" class="button compact">◷ 专注学习</button></div></header>

@@ -4,7 +4,11 @@
   "private": true,
   "scripts": {
     "build": "node tools/build-site.cjs",
-    "test": "node tests/verify.cjs && node tests/algorithms.cjs && node tests/platform.cjs",
+    "test": "node tests/verify.cjs && node tests/algorithms.cjs && node tests/platform.cjs && node tests/materials.cjs",
     "deploy": "npm run build && npx wrangler deploy"
+  },
+  "dependencies": {
+    "dompurify": "^3.4.16",
+    "marked": "^18.1.0"
   }
 }

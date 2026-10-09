@@ -11,7 +11,7 @@ let timerInterval,toastTimeout,noteTimeout;
 let lastNavPage='',navOpenMenu='',navCollapsed={ai:true,cpp:true},navPreferencesLoaded=false;
 try{const savedNav=localStorage.getItem('shijie-nav-collapsed');if(savedNav){navCollapsed=JSON.parse(savedNav)||{};navPreferencesLoaded=true;}}catch{}
 function syncNavigation(){document.querySelectorAll('[data-toggle]').forEach(button=>{const closed=Boolean(navCollapsed[button.dataset.toggle]);button.setAttribute('aria-expanded',String(!closed));$('#'+button.getAttribute('aria-controls')).hidden=closed;document.querySelector('[data-section="'+button.dataset.toggle+'"]')?.classList.toggle('nav-mobile-open',navOpenMenu===button.dataset.toggle&&!closed);});}
-const pageNames={dashboard:'学习总览',ai:'AI Agent 工作台','cpp-backend':'C++ 后端 / 工作台','cpp-roadmap':'C++ 后端 / 学习路线','cpp-lessons':'C++ 后端 / 实践课程','cpp-projects':'C++ 后端 / 实战项目','cpp-notes':'C++ 后端 / 学习笔记','cpp-resources':'C++ 后端 / 资料书架',roadmap:'AI 成长路线',lessons:'AI 每日课程',projects:'AI 实战项目',algorithms:'算法练习',notes:'AI 课程笔记',resources:'AI 资料书架',settings:'账号、设置与备份'};
+const pageNames={dashboard:'学习总览',ai:'AI Agent 工作台','cpp-backend':'C++ 后端 / 工作台','cpp-roadmap':'C++ 后端 / 学习路线','cpp-lessons':'C++ 后端 / 实践课程','cpp-projects':'C++ 后端 / 实战项目','cpp-notes':'C++ 后端 / 学习笔记','cpp-resources':'C++ 后端 / 资料书架',roadmap:'AI 成长路线',lessons:'AI 每日课程',projects:'AI 实战项目',algorithms:'算法练习',notes:'AI 课程笔记',resources:'AI 资料书架',settings:'账号、设置与备份',materials:'学习资源中心',material:'资料阅读',obsidian:'Obsidian 笔记库'};
 function validateBackup(data){
   if(!data||data.version!==1||!data.settings||!data.lessons||!data.projects||!Array.isArray(data.logs))throw Error('不是有效的拾阶备份文件');
   const s=data.settings;
@@ -69,9 +69,12 @@ function render(){
   document.querySelectorAll('[data-nav]').forEach(a=>{const current=a.dataset.nav===page;a.classList.toggle('active',current);if(current)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
   document.querySelectorAll('[data-section]').forEach(section=>section.classList.toggle('section-current',section.dataset.section===group));
   if(page==='algorithms'&&typeof algorithmTab!=='undefined'){const tab=new URLSearchParams(location.hash.split('?')[1]||'').get('tab');if(['collections','train','language','method'].includes(tab))algorithmTab=tab;}
-  $('#focus-open').hidden=inCPP||['algorithms','dashboard'].includes(page);
-  $('#main').innerHTML=(inCPP?()=>typeof backendHub==='function'?backendRoute(page):'正在加载后端课程…':({dashboard:()=>typeof learningPortal==='function'?learningPortal():'正在加载学习总览…',ai:dashboard,roadmap:roadmap,lessons:lessons,projects:projects,algorithms:()=>typeof algorithms==='function'?algorithms():'正在加载算法专题…',notes:notes,resources:resources,settings:settings}[page]))();
+  $('#focus-open').hidden=inCPP||['algorithms','dashboard','materials','material','obsidian','settings'].includes(page);
+  $('#main').innerHTML=(inCPP?()=>typeof backendHub==='function'?backendRoute(page):'正在加载后端课程…':({dashboard:()=>typeof learningPortal==='function'?learningPortal():'正在加载学习总览…',ai:dashboard,roadmap:roadmap,lessons:lessons,projects:projects,algorithms:()=>typeof algorithms==='function'?algorithms():'正在加载算法专题…',notes:notes,resources:resources,settings:settings,materials:()=>typeof materialLibrary==='function'?materialLibrary():'正在加载资料…',material:()=>typeof materialPage==='function'?materialPage():'正在加载资料…',obsidian:()=>typeof obsidianGuide==='function'?obsidianGuide():'正在加载笔记库…'}[page]))();
   bindPage(page);
+  if(typeof obsidianPanel==='function'&&['notes','cpp-notes','settings','algorithms'].includes(page)){$('#main').insertAdjacentHTML('beforeend',obsidianPanel());}
+  if(typeof materialCards==='function'&&['resources','cpp-resources'].includes(page)){$('#main').insertAdjacentHTML('afterbegin','<section class="panel"><h2>已有学习资料与练习</h2><p class="muted small">整理后的笔记和历史源码，可以在线阅读或带入 Obsidian。</p><a class="button" href="#materials">打开学习资源中心 →</a></section>'+materialCards(LEARNING_MATERIALS.filter(m=>page==='resources'?['工程工具','后端与数据库','笔记工具'].includes(m.category):true).slice(0,9)));}
+  if(typeof bindMaterials==='function')bindMaterials();
   if(page==='lessons'){const directory=$('.lesson-list'),current=$('.lesson-item.active');if(directory?.getBoundingClientRect&&current?.getBoundingClientRect)directory.scrollTop+=current.getBoundingClientRect().top-directory.getBoundingClientRect().top-80;}
 }
 function dashboard(){
