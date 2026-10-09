@@ -23,9 +23,9 @@
     <nav aria-label="主导航">
       <a href="#dashboard" data-nav="dashboard" class="nav-home"><span>◈</span>学习总览</a>
       <section class="nav-section" data-section="ai" aria-label="AI Agent 学习导航">
-        <h2 class="nav-category">01 / AI Agent</h2>
+        <button class="nav-category nav-toggle" data-toggle="ai" aria-expanded="true" aria-controls="nav-ai">01 / AI Agent <span>⌄</span></button>
         <a href="#ai" data-nav="ai" class="nav-entry"><span>↗</span>AI Agent<span class="nav-entry-caption">工作台</span></a>
-        <div class="nav-children">
+        <div class="nav-children" id="nav-ai">
           <a href="#roadmap" data-nav="roadmap">成长路线</a>
           <a href="#lessons" data-nav="lessons">每日课程</a>
           <a href="#projects" data-nav="projects">实战项目</a>
@@ -34,8 +34,15 @@
         </div>
       </section>
       <section class="nav-section" data-section="cpp" aria-label="C++ 后端学习导航">
-        <h2 class="nav-category">02 / C++ 后端</h2>
-        <a href="#cpp-backend" data-nav="cpp-backend" class="nav-entry"><span>⌘</span>C++ 后端<span class="nav-entry-caption">学习路线</span></a>
+        <button class="nav-category nav-toggle" data-toggle="cpp" aria-expanded="true" aria-controls="nav-cpp">02 / C++ 后端 <span>⌄</span></button>
+        <a href="#cpp-backend" data-nav="cpp-backend" class="nav-entry"><span>⌘</span>C++ 后端<span class="nav-entry-caption">工作台</span></a>
+        <div class="nav-children" id="nav-cpp">
+          <a href="#cpp-roadmap" data-nav="cpp-roadmap">学习路线</a>
+          <a href="#cpp-lessons" data-nav="cpp-lessons">实践课程</a>
+          <a href="#cpp-projects" data-nav="cpp-projects">实战项目</a>
+          <a href="#cpp-notes" data-nav="cpp-notes">学习笔记</a>
+          <a href="#cpp-resources" data-nav="cpp-resources">资料书架</a>
+        </div>
       </section>
       <section class="nav-section" data-section="algorithms" aria-label="算法训练导航">
         <h2 class="nav-category">03 / 通用能力</h2>

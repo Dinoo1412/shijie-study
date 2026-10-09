@@ -8,7 +8,10 @@ let state=defaultState(),storageOK=true,storageLoadError=false;
 try{const saved=localStorage.getItem(KEY);if(saved)state=validateBackup(JSON.parse(saved));}catch(error){storageOK=false;storageLoadError=true;}
 let selectedLesson=state.lastLesson,lessonStage='all',lessonWeek='all',lessonStatus='all',lessonSearch='',noteSearch='',resourceSearch='';
 let timerInterval,toastTimeout,noteTimeout;
-const pageNames={dashboard:'学习总览',ai:'AI Agent 工作台','cpp-backend':'C++ 后端',roadmap:'AI 成长路线',lessons:'AI 每日课程',projects:'AI 实战项目',algorithms:'算法练习',notes:'AI 课程笔记',resources:'AI 资料书架',settings:'账号、设置与备份'};
+let lastNavPage='',navCollapsed={ai:true,cpp:true},navPreferencesLoaded=false;
+try{const savedNav=localStorage.getItem('shijie-nav-collapsed');if(savedNav){navCollapsed=JSON.parse(savedNav)||{};navPreferencesLoaded=true;}}catch{}
+function syncNavigation(){document.querySelectorAll('[data-toggle]').forEach(button=>{const closed=Boolean(navCollapsed[button.dataset.toggle]);button.setAttribute('aria-expanded',String(!closed));$('#'+button.getAttribute('aria-controls')).hidden=closed;});}
+const pageNames={dashboard:'学习总览',ai:'AI Agent 工作台','cpp-backend':'C++ 后端 / 工作台','cpp-roadmap':'C++ 后端 / 学习路线','cpp-lessons':'C++ 后端 / 实践课程','cpp-projects':'C++ 后端 / 实战项目','cpp-notes':'C++ 后端 / 学习笔记','cpp-resources':'C++ 后端 / 资料书架',roadmap:'AI 成长路线',lessons:'AI 每日课程',projects:'AI 实战项目',algorithms:'算法练习',notes:'AI 课程笔记',resources:'AI 资料书架',settings:'账号、设置与备份'};
 function validateBackup(data){
   if(!data||data.version!==1||!data.settings||!data.lessons||!data.projects||!Array.isArray(data.logs))throw Error('不是有效的拾阶备份文件');
   const s=data.settings;
@@ -59,13 +62,15 @@ function goLesson(id){selectedLesson=id;state.lastLesson=id;save();if(location.h
 function flushNote(){if(noteTimeout){clearTimeout(noteTimeout);noteTimeout=null;save();}}
 function render(){
   flushNote();const route=location.hash.slice(1).split('?')[0];const page=Object.hasOwn(pageNames,route)?route:'dashboard';
-  const inAI=['ai','roadmap','lessons','projects','notes','resources'].includes(page);
+  const inAI=['ai','roadmap','lessons','projects','notes','resources'].includes(page),inCPP=page.startsWith('cpp-');
+  const group=inAI?'ai':inCPP?'cpp':page==='algorithms'?'algorithms':'';
+  if(lastNavPage!==page){if((lastNavPage||!navPreferencesLoaded)&&(group==='ai'||group==='cpp'))navCollapsed[group]=false;lastNavPage=page;}syncNavigation();
   $('#page-label').textContent=(inAI&&page!=='ai'?'AI Agent / '+pageNames[page].replace(/^AI /,''):pageNames[page]);
   document.querySelectorAll('[data-nav]').forEach(a=>{const current=a.dataset.nav===page;a.classList.toggle('active',current);if(current)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
-  document.querySelectorAll('[data-section]').forEach(section=>section.classList.toggle('section-current',section.dataset.section===(inAI?'ai':page==='cpp-backend'?'cpp':page==='algorithms'?'algorithms':'')));
+  document.querySelectorAll('[data-section]').forEach(section=>section.classList.toggle('section-current',section.dataset.section===group));
   if(page==='algorithms'&&typeof algorithmTab!=='undefined'){const tab=new URLSearchParams(location.hash.split('?')[1]||'').get('tab');if(['collections','train','language','method'].includes(tab))algorithmTab=tab;}
-  $('#focus-open').hidden=['algorithms','cpp-backend','dashboard'].includes(page);
-  $('#main').innerHTML=({dashboard:()=>typeof learningPortal==='function'?learningPortal():'正在加载学习总览…',ai:dashboard,'cpp-backend':()=>typeof backendPage==='function'?backendPage():'正在加载后端课程…',roadmap:roadmap,lessons:lessons,projects:projects,algorithms:()=>typeof algorithms==='function'?algorithms():'正在加载算法专题…',notes:notes,resources:resources,settings:settings}[page])();
+  $('#focus-open').hidden=inCPP||['algorithms','dashboard'].includes(page);
+  $('#main').innerHTML=(inCPP?()=>typeof backendHub==='function'?backendRoute(page):'正在加载后端课程…':({dashboard:()=>typeof learningPortal==='function'?learningPortal():'正在加载学习总览…',ai:dashboard,roadmap:roadmap,lessons:lessons,projects:projects,algorithms:()=>typeof algorithms==='function'?algorithms():'正在加载算法专题…',notes:notes,resources:resources,settings:settings}[page]))();
   bindPage(page);
 }
 function dashboard(){
@@ -117,7 +122,8 @@ function keepInputSearch(selector,setter){$(selector)?.addEventListener('input',
 function bindPage(page){
   if(typeof bindAccount==='function')bindAccount();
   if(page==='algorithms'&&typeof bindAlgorithms==='function')bindAlgorithms();
-  if(page==='cpp-backend'&&typeof bindBackend==='function')bindBackend();
+  if(page==='cpp-lessons'&&!location.hash.includes('foundation=1')&&typeof bindBackend==='function')bindBackend();
+  if(page.startsWith('cpp-')&&typeof bindBackendPages==='function')bindBackendPages();
   document.querySelectorAll('[data-lesson]').forEach(b=>b.addEventListener('click',()=>{if(page==='lessons'&&!filteredLessons().some(l=>l.id===Number(b.dataset.lesson))){lessonStage='all';lessonWeek='all';lessonStatus='all';lessonSearch='';}goLesson(Number(b.dataset.lesson));}));
   document.querySelectorAll('[data-stage]').forEach(b=>b.addEventListener('click',()=>{lessonStage=b.dataset.stage;lessonWeek='all';lessonStatus='all';lessonSearch='';goLesson(stageLessons(Number(lessonStage)).find(l=>!isDone(l.id))?.id||stageLessons(Number(lessonStage))[0].id);}));
   if(page==='lessons'){
@@ -168,6 +174,7 @@ function finishTimer(complete=false){
   syncTimer();render();
 }
 $('#today-date').textContent=new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',month:'long',day:'numeric',weekday:'long'}).format(new Date());
+document.querySelectorAll('[data-toggle]').forEach(button=>button.addEventListener('click',()=>{navCollapsed[button.dataset.toggle]=!navCollapsed[button.dataset.toggle];try{localStorage.setItem('shijie-nav-collapsed',JSON.stringify(navCollapsed));}catch{}syncNavigation();}));
 $('#focus-open').addEventListener('click',()=>{if(!state.timer){const lesson=location.hash==='#lessons'?LESSONS[selectedLesson-1]:firstPending();$('#focus-task').textContent='Day '+lesson.id+' · '+lesson.title;}syncTimer();$('#focus-dialog').showModal();});
 $('#focus-close').addEventListener('click',()=>$('#focus-dialog').close());
 $('#focus-duration').addEventListener('change',updateTimer);

@@ -1,6 +1,8 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const all={...require('../curriculum.js'),...require('../algorithm-data.js'),...require('../algorithm-state.js'),...require('../backend-data.js'),...require('../backend-state.js')};
-assert.equal(all.BACKEND_UNITS.length,16);assert.equal(all.BACKEND_PHASES.length,4);
+assert.equal(all.BACKEND_UNITS.length,32);assert.equal(all.BACKEND_PHASES.length,8);
+assert.equal(all.validateBackend({lastUnit:32,records:{32:{note:'进阶作品',checks:[0,1,2]}}}).records[32].note,'进阶作品');
+assert.throws(()=>all.validateBackend({lastUnit:33,records:{}}));
 for(const u of all.BACKEND_UNITS){assert(u.concept&&u.practice&&u.deliverable&&u.url);assert.equal(u.checks.length,3);}
 const nodes=new Map(),handlers=new Map(),checks=[0,1,2].map(i=>({dataset:{backendCheck:String(i)},checked:true,addEventListener(type,fn){handlers.set('check'+i,fn);}}));
 const context=vm.createContext({...all,Date,Intl,location:{hash:'#cpp-backend'},document:{querySelector(s){if(!nodes.has(s))nodes.set(s,{textContent:'',value:'',classList:{add(){},remove(){}},addEventListener(type,fn){handlers.set(s+':'+type,fn);}});return nodes.get(s);},querySelectorAll(s){return s==='[data-backend-check]'?checks:[];}},localStorage:{getItem:()=>null,setItem(){}},setTimeout:()=>1,clearTimeout(){},setInterval:()=>1,clearInterval(){}});
@@ -19,4 +21,5 @@ for(const text of ['AI Agent 工程师','C++ 后端工程师','算法与代码�
 assert.equal(vm.runInContext('Object.keys(state.lessons).length',context),0);
 assert.equal(vm.runInContext('Object.keys(state.algorithms.records).length',context),0);
 assert(vm.runInContext('algorithmCollections()',context).includes('字符串'));
-console.log('通过：三路线入口、16 单元内容、后端验收与撤销、笔记转义、三路线进度隔离。');
+for(const [page,title] of [['backendHub()','C++ 学成'],['backendRoadmap()','现代 C++'],['backendProjects()','并发 TCP 服务'],['backendNotes()','留下能复用']])assert(vm.runInContext(page,context).includes(title));
+console.log('通过：三路线入口、32 单元内容、后端验收与撤销、笔记转义、三路线进度隔离。');
